@@ -1,4 +1,6 @@
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
+
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -10,11 +12,12 @@ RUN npx prisma generate
 RUN npm run build
 
 # ─── Production image ─────────────────────────────────────────────────────────
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
+
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Need full deps for ts-node (used in seed) + prisma CLI
 COPY package*.json ./
 RUN npm ci
 
