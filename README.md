@@ -150,9 +150,63 @@ psql -U postgres -d wallet_db -f seed.sql
 
 ## 📡 API Reference
 
-### Base URL
+### 🌐 Live URL
+```
+https://dino-ventures.onrender.com
+```
+
+### Base URL (local)
 ```
 http://localhost:3000/api
+```
+
+---
+
+## 🧪 Live Test Commands
+
+**Health Check**
+```bash
+curl https://dino-ventures.onrender.com/health
+```
+
+**Alice's Gold Coin Balance**
+```bash
+curl "https://dino-ventures.onrender.com/api/wallet/4500f224-e388-48e7-a96e-d81432256901/balance?assetTypeId=8e1a8886-6d37-48e3-8d82-7b5c6e7e3dbd"
+```
+
+**Top-up Alice (500 Gold Coins)**
+```bash
+curl -X POST https://dino-ventures.onrender.com/api/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"4500f224-e388-48e7-a96e-d81432256901","assetTypeId":"8e1a8886-6d37-48e3-8d82-7b5c6e7e3dbd","amount":500,"idempotencyKey":"topup-alice-001","description":"Purchased Gold Coins"}'
+```
+
+**Bob Spends 30 Gold Coins**
+```bash
+curl -X POST https://dino-ventures.onrender.com/api/wallet/spend \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"0195c953-e3f6-4f58-b6f1-f6f78f87c5a9","assetTypeId":"8e1a8886-6d37-48e3-8d82-7b5c6e7e3dbd","amount":30,"idempotencyKey":"spend-bob-001","description":"Bought magic sword"}'
+```
+
+**Issue Bonus to Bob (100 Loyalty Points)**
+```bash
+curl -X POST https://dino-ventures.onrender.com/api/wallet/bonus \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"0195c953-e3f6-4f58-b6f1-f6f78f87c5a9","assetTypeId":"b62c2cb6-0039-41ed-a653-22c4dbf2b8e7","amount":100,"idempotencyKey":"bonus-bob-001","description":"Referral bonus"}'
+```
+
+**Test Idempotency (resend same request — must not double charge)**
+```bash
+curl -X POST https://dino-ventures.onrender.com/api/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"4500f224-e388-48e7-a96e-d81432256901","assetTypeId":"8e1a8886-6d37-48e3-8d82-7b5c6e7e3dbd","amount":500,"idempotencyKey":"topup-alice-001","description":"Purchased Gold Coins"}'
+```
+
+**Test Insufficient Balance (should return 422)**
+```bash
+curl -X POST https://dino-ventures.onrender.com/api/wallet/spend \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"0195c953-e3f6-4f58-b6f1-f6f78f87c5a9","assetTypeId":"8e1a8886-6d37-48e3-8d82-7b5c6e7e3dbd","amount":9999,"idempotencyKey":"spend-bob-fail-001","description":"Should fail"}'
 ```
 
 ### Health Check
