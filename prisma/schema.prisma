@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AssetType {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  symbol      String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  wallets      Wallet[]
+  LedgerEntry LedgerEntry[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  wallets Wallet[]
+}
+
+model Wallet {
+  id          String    @id @default(uuid())
+  userId      String
+  assetTypeId String
+  createdAt   DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  assetType AssetType @relation(fields: [assetTypeId], references: [id])
+
+  debitEntries  LedgerEntry[] @relation("DebitWallet")
+  creditEntries LedgerEntry[] @relation("CreditWallet")
+
+  @@unique([userId, assetTypeId])
+}
+
+// Double-entry ledger: every transaction has a debit and credit entry
+model LedgerEntry {
+  id              String          @id @default(uuid())
+  transactionId   String
+  assetTypeId     String
+  debitWalletId   String
+  creditWalletId  String
+  amount          Decimal         @db.Decimal(20, 4)
+  transactionType TransactionType
+  description     String?
+  idempotencyKey  String?         @unique
+  metadata        Json?
+  createdAt       DateTime        @default(now())
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  assetType     AssetType   @relation(fields: [assetTypeId], references: [id])
+  debitWallet   Wallet      @relation("DebitWallet", fields: [debitWalletId], references: [id])
+  creditWallet  Wallet      @relation("CreditWallet", fields: [creditWalletId], references: [id])
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  type        TransactionType
+  status      TxStatus        @default(PENDING)
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  entries LedgerEntry[]
+}
+
+enum TransactionType {
+  TOPUP    // Real-money purchase -> credit user wallet
+  BONUS    // System issues free credits to user
+  SPEND    // User spends credits
+}
+
+enum TxStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
